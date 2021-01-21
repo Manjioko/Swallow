@@ -39,6 +39,9 @@
       open (link) {
         this.$electron.shell.openExternal(link)
       }
+    },
+    mounted:function() {
+      this.$router.push("Home")
     }
   }
 </script>
