@@ -26,6 +26,7 @@
     "ffmpeg-static": "^4.2.7",
     "ffprobe-static": "^3.0.0",
     "vue": "^2.5.16",
+    "vue-draggable-resizable-gorkys": "^2.4.4",
     "vue-electron": "^1.0.6",
     "vue-router": "^3.0.1",
     "vuex": "^3.0.1",

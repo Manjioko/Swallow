@@ -11,7 +11,7 @@
         <TitileNav />
       </el-header>
       <el-container>
-        <el-aside width="150px">
+        <el-aside width="130px">
           <VideoCutNav />
         </el-aside>
         <el-container>

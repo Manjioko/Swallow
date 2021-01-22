@@ -7,6 +7,8 @@ import store from './store'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import './assets/fonts/iconfont/iconfont.css'
+import vdr from 'vue-draggable-resizable-gorkys'
+import 'vue-draggable-resizable-gorkys/dist/VueDraggableResizable.css'
 // import '../renderer/store'
 // import fs from 'fs'
 // import path from 'path'
@@ -17,6 +19,7 @@ Vue.http = Vue.prototype.$http = axios
 Vue.config.productionTip = false
 Vue.use(ElementUI)
 /* eslint-disable no-new */
+Vue.component('vdr', vdr)
 new Vue({
   components: { App },
   router,
@@ -26,6 +29,7 @@ new Vue({
   template: '<App/>'
 }).$mount('#app')
 
+// Vue.component('vdr', vdr)
 
 // let fileContents = fs.readFileSync(path.join(__static, '/someFile.txt'), 'utf8')
 

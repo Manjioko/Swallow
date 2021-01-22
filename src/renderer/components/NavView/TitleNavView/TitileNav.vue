@@ -40,8 +40,9 @@ export default {
   height: 100%;
 }
 .el-main {
-  background: rgb(241, 241, 241);
+  background: rgb(248, 248, 248);
   padding: 0px !important;
+  height: 100%;
 }
 .el-container:nth-child(5) .el-aside,
 .el-container:nth-child(6) .el-aside {
