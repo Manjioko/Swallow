@@ -1,21 +1,26 @@
 <template>
   <div id="Home">
     <!-- <div>
-      <topNav />
+      <TitileNav />
     </div>
     <div>
-      <leftNav />
+      <VideoCutNav />
     </div> -->
     <el-container>
       <el-header>
-        <topNav />
+        <TitileNav />
       </el-header>
       <el-container>
         <el-aside width="150px">
-          <leftNav />
+          <VideoCutNav />
         </el-aside>
         <el-container>
-          <el-main>Main</el-main>
+          <el-main>
+            <VideoCut v-if="mainViewSwitch == '1'" />
+            <VideoCombine v-if="mainViewSwitch == '2'" />
+            <VideoWaterMark v-if="mainViewSwitch == '3'" />
+            <VideoConvert v-if="mainViewSwitch == '4'" />
+          </el-main>
         </el-container>
       </el-container>
       <!-- <el-footer>Footer</el-footer> -->
@@ -24,13 +29,33 @@
 </template>
 
 <script>
-import topNav from "./NavView/topNav";
-import leftNav from "./NavView/leftNav";
+import TitileNav from "./NavView/TitleNavView/TitileNav";
+import VideoCutNav from "./NavView/SubNavView/VideoCutNav";
+import VideoCombine from "./VideoHandle/VideoCombineHandle"
+import VideoCut from "./VideoHandle/VideoCutHandle"
+import VideoConvert from "./VideoHandle/VideoConvertHandle"
+import VideoWaterMark from "./VideoHandle/VideoWaterMarkHandle"
 
 export default {
-  name: "topNavigation",
-  components: { topNav, leftNav },
+  name: "TitileNavigation",
+  components: { TitileNav, VideoCutNav, VideoCombine, VideoCut, VideoConvert, VideoWaterMark },
+  data() {
+    return {
+      mainViewSwitch: "1"
+    };
+  },
   methods: {},
+  watch: {
+    viewSwitch: function () {
+      // console.log(this.viewSwitch);
+      this.mainViewSwitch = this.viewSwitch;
+    },
+  },
+  computed: {
+    viewSwitch: function () {
+      return this.$store.state.Counter.viewSwitch;
+    },
+  },
   mounted: function () {
     // this.$router.push("Home")
   },
@@ -38,49 +63,11 @@ export default {
 </script>
 
 <style>
-.el-header,
-.el-footer {
-  padding: 0px !important;
-  margin-left: 150px;
-  background-color: #b3c0d1;
-  color: #333;
-  text-align: center;
-  line-height: 60px;
-}
-#Home{
+#Home {
   height: 100%;
-}
-.el-aside {
-  background-color: #d3dce6;
-  color: #333;
-  text-align: center;
-  line-height: 200px;
-}
-
-.el-main {
-  background-color: #e9eef3;
-  color: #333;
-  text-align: center;
-  line-height: 160px;
 }
 
 body > .el-container {
   margin-bottom: 40px;
-  
-}
-.el-container {
-  height: 100%;
-}
-.el-aside {
-  height: 100%;
-}
-
-.el-container:nth-child(5) .el-aside,
-.el-container:nth-child(6) .el-aside {
-  line-height: 260px;
-}
-
-.el-container:nth-child(7) .el-aside {
-  line-height: 320px;
 }
 </style>

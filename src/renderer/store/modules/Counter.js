@@ -1,5 +1,6 @@
 const state = {
-  main: 0
+  main: 0,
+  viewSwitch: ""
 }
 
 const mutations = {
@@ -8,6 +9,9 @@ const mutations = {
   },
   INCREMENT_MAIN_COUNTER (state) {
     state.main++
+  },
+  SubNavViewSwitchFn(state,payload) {
+    state.viewSwitch = payload
   }
 }
 

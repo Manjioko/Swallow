@@ -1,0 +1,37 @@
+{
+  "id": "",
+  "name": "",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "5651503",
+      "name": "图片",
+      "font_class": "tupian",
+      "unicode": "e67f",
+      "unicode_decimal": 59007
+    },
+    {
+      "icon_id": "11391556",
+      "name": "视频",
+      "font_class": "shipin",
+      "unicode": "e63d",
+      "unicode_decimal": 58941
+    },
+    {
+      "icon_id": "16562596",
+      "name": "音频",
+      "font_class": "yinpin",
+      "unicode": "e6df",
+      "unicode_decimal": 59103
+    },
+    {
+      "icon_id": "18681348",
+      "name": "1-2-2流媒体服务",
+      "font_class": "1-2-2liumeitifuwu",
+      "unicode": "e62e",
+      "unicode_decimal": 58926
+    }
+  ]
+}

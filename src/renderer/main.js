@@ -4,8 +4,10 @@ import axios from 'axios'
 import App from './App'
 import router from './router'
 import store from './store'
-import ElementUI from 'element-ui';
-import 'element-ui/lib/theme-chalk/index.css';
+import ElementUI from 'element-ui'
+import 'element-ui/lib/theme-chalk/index.css'
+import './assets/fonts/iconfont/iconfont.css'
+// import '../renderer/store'
 // import fs from 'fs'
 // import path from 'path'
 

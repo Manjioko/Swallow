@@ -13,7 +13,7 @@ const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
   : `file://${__dirname}/index.html`
 
-function createWindow () {
+function createWindow() {
   /**
    * Initial window options
    */
@@ -26,6 +26,18 @@ function createWindow () {
   mainWindow.loadURL(winURL)
   // 隐藏菜单栏
   mainWindow.setMenu(null)
+
+  mainWindow.loadURL(winURL);
+
+  // 打开开发工具页面
+  if (process.env.NODE_ENV === "development") {
+    mainWindow.webContents.on("did-frame-finish-load", () => {
+      mainWindow.webContents.once("devtools-opened", () => {
+        mainWindow.focus();
+      });
+      mainWindow.webContents.openDevTools();
+    });
+  }
 
   mainWindow.on('closed', () => {
     mainWindow = null
