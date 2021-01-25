@@ -1,10 +1,10 @@
 <template>
   <div class="VideoCutHandle" ref="select_frame" ondragstart="return false">
     <!-- <div>VideoCutHandle</div> -->
-    <div class="VideoCutHandle">
+    <div class="VideoCutHandle_video_parent">
       <video
         :src="videoSourcePath"
-        :style="{ width: videoWidth + 'px', height: videoHeight + 'px' }"
+        class="videoCutVideoClass"
         autoplay="autoplay"
         muted="muted"
         loop="loop"
@@ -59,14 +59,26 @@ export default {
 
 <style>
 .VideoCutHandle {
-  width: 600px;
+  height: 100%;
+  /* width: 600px; */
+  position: relative;
+
   /* height: 400px; */
 
   /* padding: 100px; */
+}
+.VideoCutHandle_video_parent {
+  position: absolute;
+  left: 50%;
+  top: 10%;
+  transform: translateX(-50%);
 }
 .dragFileClass {
   height: 400px;
   width: 600px;
   background: darkorange;
+}
+.videoCutVideoClass {
+  max-height: 500px;
 }
 </style>
