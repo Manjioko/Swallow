@@ -4,35 +4,21 @@
     <div class="VideoCutHandle_video_parent">
       <div
         class="vdrParentClass"
-        :style="{
-          width:
-            videoratio == 16 / 9
-              ? '800px'
-              : videoratio == 4 / 3
-              ? '480px'
-              : videoratio == 3 / 4
-              ? '360px'
-              : '',
-          height:
-            videoratio == 16 / 9
-              ? '450px'
-              : videoratio == 4 / 3
-              ? '360px'
-              : videoratio == 3 / 4
-              ? '480px'
-              : '',
+        :class="{
+          Class16_9: videoratio == 16 / 9,
+          Class4_3: videoratio == 4 / 3,
+          Class3_4: videoratio == 3 / 4,
         }"
       >
         <video
+          ref="video16_9"
           v-if="videoratio == 16 / 9"
           :src="videoSourcePath"
           class="videoCutVideoClass"
-          autoplay="autoplay"
-          muted="muted"
-          loop="loop"
           width="800px"
           height="450px"
           @dblclick="cancelsrc"
+          @canplay="getVidDur"
         ></video>
         <video
           v-else-if="videoratio == 3 / 4"
@@ -60,6 +46,7 @@
           <div class="dragTipClass">请将视频拖放到此处</div>
         </div>
         <vdr
+          :v-for="isVdr"
           :parent="true"
           :x="x"
           :y="y"
@@ -71,8 +58,20 @@
         >
         </vdr>
       </div>
+      <div class="block">
+        <el-slider
+          v-model="sliderValue"
+          :max="videoDuration"
+          :show-tooltip="true"
+          :step="0.1"
+        >
+        </el-slider>
+      </div>
+      <div class="cutBtnClass">
+        <el-button type="primary" @click="cutVideo">剪切视频</el-button>
+      </div>
+      <!-- <button @click="cutVideo">剪切视频</button> -->
     </div>
-    <button @click="cutVideo">剪切视频</button>
   </div>
 </template>
 
@@ -105,14 +104,41 @@ export default {
       h: 100,
       w: 100,
       cutData: [100, 100, 100, 100],
+
+      // 解决 vdr 在父级div宽高变化的情况下没有更新其父级大小,导致不能正确识别父级宽高的问题
+      isVdr: [],
+      sliderValue: 1,
+      videoDuration: 0,
     };
   },
+  watch: {
+    // 拉动滑块时视频要快进到相应的帧
+    sliderValue: function () {
+      console.log(this.sliderValue);
+      if (this.sliderValue) {
+        this.$refs.video16_9.currentTime = this.sliderValue;
+        // this.$forceUpdate()
+      }
+    },
+  },
   methods: {
+    // 取消所选视频
     cancelsrc(e) {
       // console.log(e.target)
       e.target.src = "";
       this.videoratio = 0;
       this.cutData = [100, 100, 100, 100];
+      this.clearVDR();
+    },
+    // 清除vdr插件
+    clearVDR() {
+      this.isVdr = [];
+      (this.x = 100), (this.y = 100), (this.w = 100), (this.h = 100);
+    },
+    // 获取视频时常
+    getVidDur() {
+      console.log(this.$refs.video16_9.duration);
+      this.videoDuration = this.$refs.video16_9.duration;
     },
     onDrag(x, y) {
       this.x = x;
@@ -199,11 +225,13 @@ export default {
     };
     this.$refs.select_frame.ondrop = (e) => {
       e.preventDefault(); // 阻止拖放后的浏览器默认行为
+      // 先清空一下vdr
+      this.clearVDR();
       const data = e.dataTransfer.files[0]; // 获取文件对象
       if (data.length < 1) {
         return; // 检测是否有文件拖拽到页面
       }
-      this.videoSourcePath = data.path;
+      // this.videoSourcePath = data.path;
       this.videoSourceName = data.name;
       // let buf = fs.readFileSync(this.videoSourcePath);
       // let uint8Buffer = Uint8Array.from(buf);
@@ -235,6 +263,10 @@ export default {
         that.videoratio =
           metadata.streams[0].width / metadata.streams[0].height;
         that.videoSourcePath = data.path;
+        // 加入切割的初始值
+        that.cutData = [100, 100, 100, 100];
+        // 加入vdr
+        that.isVdr[0] = true;
         // exec(
         //   ffmpegStatic +
         //     " -i " +
@@ -263,6 +295,18 @@ export default {
 </script>
 
 <style>
+.Class16_9 {
+  width: 800px;
+  height: 450px;
+}
+.Class4_3 {
+  width: 480px;
+  height: 360px;
+}
+.Class3_4 {
+  width: 360px;
+  height: 480px;
+}
 .VideoCutHandle {
   height: 100%;
   /* width: 600px; */
@@ -309,5 +353,10 @@ export default {
 }
 .vdrParentClass {
   display: flex;
+}
+.cutBtnClass {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

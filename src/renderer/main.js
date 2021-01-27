@@ -9,6 +9,8 @@ import 'element-ui/lib/theme-chalk/index.css'
 import './assets/fonts/iconfont/iconfont.css'
 import vdr from 'vue-draggable-resizable-gorkys'
 import 'vue-draggable-resizable-gorkys/dist/VueDraggableResizable.css'
+// import VueDraggableResizable from 'vue-draggable-resizable'
+// import 'vue-draggable-resizable/dist/VueDraggableResizable.css'
 // import '../renderer/store'
 // import fs from 'fs'
 // import path from 'path'
@@ -20,6 +22,7 @@ Vue.config.productionTip = false
 Vue.use(ElementUI)
 /* eslint-disable no-new */
 Vue.component('vdr', vdr)
+// Vue.component('vue-draggable-resizable', VueDraggableResizable)
 new Vue({
   components: { App },
   router,

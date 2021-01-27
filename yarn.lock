@@ -8395,6 +8395,11 @@ vue-draggable-resizable-gorkys@^2.4.4:
   dependencies:
     core-js "^2.6.11"
 
+vue-draggable-resizable@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/vue-draggable-resizable/-/vue-draggable-resizable-2.3.0.tgz#94c433ca748bc1a4d0959ba1c5c0e1c3536cee5b"
+  integrity sha512-77CLRj1TPwB30pwsjOf3pkd1UzYanCdKXbqhILJ0Oo5QQl50lvBfyQCXxMFzwWwTc3sbBbQH3FfWSV+BkoSElA==
+
 vue-electron@^1.0.6:
   version "1.0.6"
   resolved "https://registry.yarnpkg.com/vue-electron/-/vue-electron-1.0.6.tgz#e798e03180b8933539defe31f92e53b9242b9406"
