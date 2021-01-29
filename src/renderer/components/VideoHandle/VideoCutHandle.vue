@@ -62,8 +62,8 @@
           :step="0.1"
         >
         </el-slider>
-        <span class="targetTimeLeft">-{{ Math.round(sliderValue[0]) }}</span>
-        <span class="targetTimeRight">-{{ Math.round(sliderValue[1]) }}</span>
+        <span class="targetTimeLeft">-{{ sliderValue[0] }}s</span>
+        <span class="targetTimeRight">-{{ sliderValue[1] }}s</span>
       </div>
       <div class="cutBtnClass">
         <el-button type="primary" @click="cutVideoClickFn" :loading="iscut">剪切视频</el-button>
@@ -76,6 +76,7 @@
 <script>
 import ffm from "../../../utils/ffmpegHandle";
 const ffmpeg = new ffm();
+import { remote } from "electron";
 
 export default {
   data() {
@@ -105,12 +106,32 @@ export default {
     },
   },
   methods: {
-    cutVideoClickFn() {
+    async cutVideoClickFn() {
+      let savePath;
+      await new Promise((resolve, reject) => {
+        remote.dialog.showOpenDialog(
+          {
+            buttonLabel: "保存",
+            properties: ["openDirectory"],
+          },
+          (filename) => {
+            if (filename) {
+              // this.savePath = filename[0];
+              // console.log(this.savePath);
+              resolve(filename[0]);
+              savePath = filename[0];
+            } else {
+              reject("用户取消");
+            }
+          }
+        );
+      });
       ffmpeg.cutVideo(
         this.videoSourcePath,
         this.cutData,
         this.sliderValue,
-        this.videoName
+        this.videoName,
+        savePath
       );
     },
     // 获取视频时常

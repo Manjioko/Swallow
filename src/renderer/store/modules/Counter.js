@@ -1,6 +1,7 @@
 const state = {
   main: 0,
-  viewSwitch: ""
+  viewSwitch: "",
+  isCuted: false
 }
 
 const mutations = {
@@ -12,6 +13,10 @@ const mutations = {
   },
   SubNavViewSwitchFn(state,payload) {
     state.viewSwitch = payload
+  },
+  IsCutHandle(state,payload) {
+    console.log(payload)
+    state.isCuted = payload
   }
 }
 
