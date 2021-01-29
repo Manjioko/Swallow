@@ -12,41 +12,36 @@
       >
         <video
           ref="video16_9"
-          v-if="videoratio == 16 / 9"
           :src="videoSourcePath"
           class="videoCutVideoClass"
-          width="800px"
-          height="450px"
+          :width="
+            videoratio == 16 / 9
+              ? '800px'
+              : videoratio == 3 / 4
+              ? '360px'
+              : videoratio == 4 / 3
+              ? '480px'
+              : '0px'
+          "
+          :height="
+            videoratio == 16 / 9
+              ? '450px'
+              : videoratio == 3 / 4
+              ? '480px'
+              : videoratio == 4 / 3
+              ? '360px'
+              : '0px'
+          "
           @dblclick="cancelsrc"
+          @click="startToPaly"
           @canplay="getVidDur"
+          @loadeddata="handleLoadedData"
+          @timeupdate="handleTimeUpate"
         ></video>
-        <video
-          v-else-if="videoratio == 3 / 4"
-          :src="videoSourcePath"
-          class="videoCutVideoClass"
-          autoplay="autoplay"
-          muted="muted"
-          loop="loop"
-          width="360px"
-          height="480px"
-          @dblclick="cancelsrc"
-        ></video>
-        <video
-          v-else-if="videoratio == 4 / 3"
-          :src="videoSourcePath"
-          class="videoCutVideoClass"
-          autoplay="autoplay"
-          muted="muted"
-          loop="loop"
-          width="480px"
-          height="360px"
-          @dblclick="cancelsrc"
-        ></video>
-        <div v-else class="videoCutVideoClass firstTextClass">
+        <div v-if="!videoratio" class="videoCutVideoClass firstTextClass">
           <div class="dragTipClass">请将视频拖放到此处</div>
         </div>
         <vdr
-          :v-for="isVdr"
           :parent="true"
           :x="x"
           :y="y"
@@ -62,40 +57,30 @@
         <el-slider
           v-model="sliderValue"
           :max="videoDuration"
+          range
           :show-tooltip="true"
           :step="0.1"
         >
         </el-slider>
+        <span class="targetTimeLeft">-{{ Math.round(sliderValue[0]) }}</span>
+        <span class="targetTimeRight">-{{ Math.round(sliderValue[1]) }}</span>
       </div>
       <div class="cutBtnClass">
-        <el-button type="primary" @click="cutVideo">剪切视频</el-button>
+        <el-button type="primary" @click="cutVideoClickFn" :loading="iscut">剪切视频</el-button>
+        <el-button type="primary" @click="startToPaly">播放/暂停</el-button>
       </div>
-      <!-- <button @click="cutVideo">剪切视频</button> -->
     </div>
   </div>
 </template>
 
 <script>
-const fs = window.require("fs");
-const { spawn, exec } = window.require("child_process");
-import ffmpeg from "fluent-ffmpeg";
-import ffmpegStatic from "ffmpeg-static";
-import ffprobeStatic from "ffprobe-static";
-
-let ffmpegPath = ffmpegStatic.path;
-let ffprobePath = ffprobeStatic.path;
-
-// 设置 fluent-ffmpeg 的 ffmpeg 、ffprobe路径
-ffmpeg.setFfmpegPath(ffmpegStatic);
-ffmpeg.setFfprobePath(ffprobePath);
+import ffm from "../../../utils/ffmpegHandle";
+const ffmpeg = new ffm();
 
 export default {
   data() {
     return {
       videoSourcePath: "",
-      videoSourceName: "",
-      videoWidth: 300,
-      videoHeight: 300,
       videoratio: 0,
       frameWidth: 0,
       frameHeight: 0,
@@ -104,42 +89,96 @@ export default {
       h: 100,
       w: 100,
       cutData: [100, 100, 100, 100],
-
-      // 解决 vdr 在父级div宽高变化的情况下没有更新其父级大小,导致不能正确识别父级宽高的问题
-      isVdr: [],
-      sliderValue: 1,
+      sliderValue: [0, 0],
       videoDuration: 0,
+      isPlay: false,
+      videoName: "",
+      iscut: false,
     };
   },
   watch: {
     // 拉动滑块时视频要快进到相应的帧
     sliderValue: function () {
-      console.log(this.sliderValue);
-      if (this.sliderValue) {
-        this.$refs.video16_9.currentTime = this.sliderValue;
-        // this.$forceUpdate()
+      if (this.sliderValue[0] && !this.isPlay) {
+        this.$refs.video16_9.currentTime = this.sliderValue[0];
       }
     },
   },
   methods: {
-    // 取消所选视频
-    cancelsrc(e) {
-      // console.log(e.target)
-      e.target.src = "";
-      this.videoratio = 0;
-      this.cutData = [100, 100, 100, 100];
-      this.clearVDR();
-    },
-    // 清除vdr插件
-    clearVDR() {
-      this.isVdr = [];
-      (this.x = 100), (this.y = 100), (this.w = 100), (this.h = 100);
+    cutVideoClickFn() {
+      ffmpeg.cutVideo(
+        this.videoSourcePath,
+        this.cutData,
+        this.sliderValue,
+        this.videoName
+      );
     },
     // 获取视频时常
     getVidDur() {
-      console.log(this.$refs.video16_9.duration);
-      this.videoDuration = this.$refs.video16_9.duration;
+      console.log("视频时常: ", this.$refs.video16_9.duration);
+      if (this.$refs.video16_9.duration) {
+        if (!this.sliderValue[1]) {
+          this.sliderValue[1] = [this.$refs.video16_9.duration];
+        }
+        this.videoDuration = this.$refs.video16_9.duration;
+      }
     },
+    // 取消所选视频
+    cancelsrc(e) {
+      e.target.src = "";
+      this.videoSourcePath = "";
+      this.videoratio = 0;
+      this.cutData = [100, 100, 100, 100];
+      this.sliderValue = [0, 0];
+    },
+    // 播放或者暂停视频
+    startToPaly() {
+      if (this.$refs.video16_9.paused) {
+        this.isPlay = true;
+        this.$refs.video16_9.play();
+      } else {
+        this.isPlay = false;
+        this.$refs.video16_9.pause();
+      }
+    },
+    // 处理播放时间变化
+    handleTimeUpate() {
+      // 仅在播放状态,滑块才跟着视频时间变化改变,暂停状态这里不执行
+      if (this.isPlay) {
+        console.log(this.sliderValue);
+        let [startTime, endTime] = this.sliderValue;
+        // 滑块两端重叠时暂停播放
+        if (Math.round(startTime) < Math.round(endTime)) {
+          this.sliderValue = [
+            this.$refs.video16_9.currentTime,
+            this.sliderValue[1],
+          ];
+        } else {
+          this.isPlay = false;
+          this.$refs.video16_9.pause();
+        }
+      }
+    },
+    // 处理元数据加载
+    handleLoadedData(event) {
+      this.frameWidth = event.target.videoWidth;
+      this.frameHeight = event.target.videoHeight;
+      this.videoName = event.target.src.split("/").pop();
+      console.log(event.target.src.split("/").pop());
+      // 加入切割的初始值
+      this.cutData = [100, 100, 100, 100];
+
+      // 判断是否在合法的比例范围内
+      let ratio = this.frameWidth / this.frameHeight;
+      let isLegal = ratio == 16 / 9 || ratio == 4 / 3 || ratio == 3 / 4;
+      if (isLegal) {
+        this.videoratio = ratio;
+      } else {
+        this.videoSourcePath = "";
+        this.$message("视频尺寸不合规,请重新选择");
+      }
+    },
+    // vdr拖动时触发
     onDrag(x, y) {
       this.x = x;
       this.y = y;
@@ -158,8 +197,8 @@ export default {
         this.cutData[2] = 100;
         this.cutData[3] = 100;
       }
-      // console.log(this.cutData);
     },
+    // vdr 大小改变时触发
     onResize(x, y, w, h) {
       this.x = x;
       this.y = y;
@@ -187,36 +226,6 @@ export default {
         this.cutData[0] = 100;
         this.cutData[1] = 100;
       }
-      // console.log(this.cutData);
-    },
-    cutVideo() {
-      let cut = "crop=" + this.cutData.join(":");
-      // let cut = 'crop=80:60:200:100'
-      let ff = spawn(ffmpegStatic, [
-        "-y",
-        "-i",
-        this.videoSourcePath,
-        "-filter:v",
-        cut,
-        "-c:a",
-        "copy",
-        "C:\\Users\\devp2\\Desktop\\out.mp4",
-      ]);
-
-      ff.stdout.on("data", (data) => {
-        console.log(`stdout: ${data}`);
-      });
-
-      ff.stderr.on("data", (data) => {
-        console.error(`stderr: ${data}`);
-      });
-
-      ff.on("close", (code) => {
-        console.log(`子进程退出，退出码 ${code}`);
-      });
-      ff.on("message", (m) => {
-        console.log(m);
-      });
     },
   },
   mounted: function () {
@@ -225,67 +234,29 @@ export default {
     };
     this.$refs.select_frame.ondrop = (e) => {
       e.preventDefault(); // 阻止拖放后的浏览器默认行为
-      // 先清空一下vdr
-      this.clearVDR();
       const data = e.dataTransfer.files[0]; // 获取文件对象
       if (data.length < 1) {
         return; // 检测是否有文件拖拽到页面
       }
-      // this.videoSourcePath = data.path;
-      this.videoSourceName = data.name;
-      // let buf = fs.readFileSync(this.videoSourcePath);
-      // let uint8Buffer = Uint8Array.from(buf);
-      // let bolb = new Blob([uint8Buffer]);
-      // this.videoSourcePath = window.URL.createObjectURL(bolb);
-      // ffmpeg(this.videoSourcePath)
-      //   .videoCodec("libx264")
-      //   .output(savePath + "/big.mov")
-      //   // .audioCodec("copy")
-      //   .size("300x300")
-      //   .on("error", function (err) {
-      //     // console.log(this)
-      //     console.log("An error occurred: " + err.message);
-      //   })
-      //   .on("end", function () {
-      //     console.log("Processing finished !");
-      //   })
-      //   .run();
-      // console.log(fs.readFileSync(this.videoSourcePath))
-      // this.upload(data); //上传文件的方法
-      // console.log(this.videoSourcePath);
-      let that = this;
-      ffmpeg.ffprobe(data.path, function (err, metadata) {
-        if (err) {
-          console.log(err);
-        }
-        that.frameWidth = metadata.streams[0].width;
-        that.frameHeight = metadata.streams[0].height;
-        that.videoratio =
-          metadata.streams[0].width / metadata.streams[0].height;
-        that.videoSourcePath = data.path;
-        // 加入切割的初始值
-        that.cutData = [100, 100, 100, 100];
-        // 加入vdr
-        that.isVdr[0] = true;
-        // exec(
-        //   ffmpegStatic +
-        //     " -i " +
-        //     data.path +
-        //     ' -filter:v "crop=80:60:200:100" -c:a copy C:\\Users\\devp2\\Desktop\\out.mp4',
-        //   (error, stdout, stderr) => {
-        //     if (error) {
-        //       console.error(`执行的错误: ${error}`);
-        //       return;
-        //     }
-        //     console.log(`stdout: ${stdout}`);
-        //     console.log(`stderr: ${stderr}`);
-        //   }
-        // );
-      });
+
+      if (!this.videoSourcePath && data.path.endsWith(".mp4")) {
+        this.videoSourcePath = data.path;
+        console.log(this.videoratio);
+        this.x = 100;
+        this.y = 100;
+        this.w = 100;
+        this.h = 100;
+        // 清空滑块数据
+        this.sliderValue = [0, 0];
+      } else if (!data.path.endsWith(".mp4")) {
+        this.$message("视频格式暂不支持");
+      } else {
+        this.$message("已经存在视频");
+      }
     };
     this.$refs.select_frame.ondragenter = (e) => {
       e.preventDefault(); // 阻止拖入时的浏览器默认行为
-      this.$refs.select_frame.border = "2px dashed red";
+      // this.$refs.select_frame.border = "2px dashed red";
     };
     this.$refs.select_frame.ondragover = (e) => {
       e.preventDefault(); // 阻止拖来拖去的浏览器默认行为
@@ -295,6 +266,13 @@ export default {
 </script>
 
 <style>
+.targetTimeRight {
+  color: #9c9c9c;
+  float: right;
+}
+.targetTimeLeft {
+  color: #9c9c9c;
+}
 .Class16_9 {
   width: 800px;
   height: 450px;
@@ -309,12 +287,7 @@ export default {
 }
 .VideoCutHandle {
   height: 100%;
-  /* width: 600px; */
   position: relative;
-
-  /* height: 400px; */
-
-  /* padding: 100px; */
 }
 .handle {
   background: none !important;
@@ -337,9 +310,6 @@ export default {
   width: 600px;
   background: darkorange;
 }
-/* .videoCutVideoClass {
-  max-height: 500px;
-} */
 .firstTextClass {
   width: 800px;
   height: 450px;
@@ -358,5 +328,15 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+/* 强制更改滑块的样式 */
+.el-slider__bar {
+  background-color: rgba(101, 184, 252, 0.479) !important;
+}
+.el-slider__button {
+  width: 12px !important;
+  height: 12px !important;
+  border: 2px solid #ff7b00 !important;
+  border-radius: 18% !important;
 }
 </style>
