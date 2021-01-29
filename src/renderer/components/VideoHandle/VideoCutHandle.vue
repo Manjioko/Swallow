@@ -38,8 +38,8 @@
           @loadeddata="handleLoadedData"
           @timeupdate="handleTimeUpate"
         ></video>
-        <div v-if="!videoratio" class="videoCutVideoClass firstTextClass">
-          <div class="dragTipClass">请将视频拖放到此处</div>
+        <div v-if="!videoratio" class="videoCutVideoClass firstTextClass" style="cursor: pointer">
+          <div class="dragTipClass" @click="selectVideoFile">选择/拖放 <span :style="{color: '#ff0000'}">视频</span> 到此处</div>
         </div>
         <vdr
           :parent="true"
@@ -66,8 +66,11 @@
         <span class="targetTimeRight">-{{ sliderValue[1] }}s</span>
       </div>
       <div class="cutBtnClass">
-        <el-button type="primary" @click="cutVideoClickFn" :loading="iscut">剪切视频</el-button>
-        <el-button type="primary" @click="startToPaly">播放/暂停</el-button>
+        <el-button type="primary" @click="cutVideoClickFn" :loading="iscut"
+          >剪切视频</el-button
+        >
+        <el-button @click="startToPaly">播放/暂停</el-button>
+        <el-button type="danger" @click="cancelsrc">清空视频</el-button>
       </div>
     </div>
   </div>
@@ -109,34 +112,60 @@ export default {
     async cutVideoClickFn() {
       let savePath;
       await new Promise((resolve, reject) => {
-        remote.dialog.showOpenDialog(
-          {
-            buttonLabel: "保存",
-            properties: ["openDirectory"],
-          },
-          (filename) => {
-            if (filename) {
-              // this.savePath = filename[0];
-              // console.log(this.savePath);
-              resolve(filename[0]);
-              savePath = filename[0];
-            } else {
-              reject("用户取消");
+        if (this.videoSourcePath) {
+          remote.dialog.showOpenDialog(
+            {
+              buttonLabel: "保存",
+              properties: ["openDirectory"],
+            },
+            (filename) => {
+              if (filename) {
+                // this.savePath = filename[0];
+                // console.log(this.savePath);
+                resolve(filename[0]);
+                savePath = filename[0];
+              } else {
+                reject("用户取消");
+              }
             }
-          }
-        );
+          );
+        } else {
+          this.$message("视频文件缺失");
+          // reject("视频文件缺失");
+        }
       });
-      ffmpeg.cutVideo(
-        this.videoSourcePath,
-        this.cutData,
-        this.sliderValue,
-        this.videoName,
-        savePath
-      );
+      if (savePath) {
+        ffmpeg.cutVideo(
+          this.videoSourcePath,
+          this.cutData,
+          this.sliderValue,
+          this.videoName,
+          savePath
+        );
+      }
+    },
+    selectVideoFile() {
+      remote.dialog.showOpenDialog(
+            {
+              buttonLabel: "选择视频文件",
+              properties: ["openFile"],
+            },
+            (filename) => {
+              // console.log(filename)
+              if (filename && filename[0].endsWith(".mp4")) {
+                // this.savePath = filename[0];
+                // console.log(this.savePath);
+                // resolve(filename[0]);
+                this.videoSourcePath = filename[0];
+              } else {
+                this.$message("视频文件格式暂不支持")
+              }
+            }
+          );
     },
     // 获取视频时常
     getVidDur() {
-      console.log("视频时常: ", this.$refs.video16_9.duration);
+      // console.log("视频时常: ", this.$refs.video16_9.duration);
       if (this.$refs.video16_9.duration) {
         if (!this.sliderValue[1]) {
           this.sliderValue[1] = [this.$refs.video16_9.duration];
@@ -154,22 +183,25 @@ export default {
     },
     // 播放或者暂停视频
     startToPaly() {
-      if (this.$refs.video16_9.paused) {
-        this.isPlay = true;
-        this.$refs.video16_9.play();
-      } else {
-        this.isPlay = false;
-        this.$refs.video16_9.pause();
+      // 播放源一定要存在才能进行判断
+      if (this.videoSourcePath) {
+        if (this.$refs.video16_9.paused) {
+          this.isPlay = true;
+          this.$refs.video16_9.play();
+        } else {
+          this.isPlay = false;
+          this.$refs.video16_9.pause();
+        }
       }
     },
     // 处理播放时间变化
     handleTimeUpate() {
       // 仅在播放状态,滑块才跟着视频时间变化改变,暂停状态这里不执行
       if (this.isPlay) {
-        console.log(this.sliderValue);
+        // console.log(this.sliderValue);
         let [startTime, endTime] = this.sliderValue;
         // 滑块两端重叠时暂停播放
-        if (Math.round(startTime) < Math.round(endTime)) {
+        if (Math.ceil(startTime) < Math.ceil(endTime)) {
           this.sliderValue = [
             this.$refs.video16_9.currentTime,
             this.sliderValue[1],
@@ -185,7 +217,7 @@ export default {
       this.frameWidth = event.target.videoWidth;
       this.frameHeight = event.target.videoHeight;
       this.videoName = event.target.src.split("/").pop();
-      console.log(event.target.src.split("/").pop());
+      // console.log(event.target.src.split("/").pop());
       // 加入切割的初始值
       this.cutData = [100, 100, 100, 100];
 
@@ -262,7 +294,7 @@ export default {
 
       if (!this.videoSourcePath && data.path.endsWith(".mp4")) {
         this.videoSourcePath = data.path;
-        console.log(this.videoratio);
+        // console.log(this.videoratio);
         this.x = 100;
         this.y = 100;
         this.w = 100;
